@@ -1,9 +1,26 @@
 {
+  "name": "myapi-front",
+  "version": "1.0.0",
+  "description": "A modern frontend project with Tailwind CSS and DaisyUI",
+  "scripts": {
+    "dev": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
+    "build": "tailwindcss -i ./src/input.css -o ./src/output.css --minify",
+    "preview": "npx serve src",
+    "proxy": "node proxy-server.js",
+    "start": "concurrently \"npm run proxy\" \"npm run preview\""
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.11",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
-    "daisyui": "^5.0.46"
+    "daisyui": "^5.0.46",
+    "serve": "^14.2.1",
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "http-proxy-middleware": "^2.0.6"
   }
 }

@@ -1,38 +1,99 @@
-<!doctype html>
-<html data-theme="cupcake">
-
+<!DOCTYPE html>
+<html lang="zh-CN">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的主页 - Alex_Yehui</title>
+  <link rel="icon" href="favicon.ico" />
   <link href="./output.css" rel="stylesheet">
 </head>
 
-<body>
-  <h1 class="text-3xl font-bold underline">
-    Hello world!
-  </h1>
-  <div class="glass">
-    <input type="file" class="file-input">
-    <div class="card w-96 bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">Card Title</h2>
-        <p>If a dog chews shoes whose shoes does he choose?</p>
-        <div class="card-actions justify-end">
-          <button class="btn btn-primary">Buy Now</button>
-
-        </div>
+<body
+  class="min-h-screen bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex flex-col items-center justify-center">
+  <main class="w-full max-w-2xl mx-auto p-6">
+    <section class="text-center mb-10 animate-fade-in-up">
+      <h1 class="text-5xl md:text-7xl font-extrabold text-white drop-shadow-lg mb-4">Hi, I'm <span
+          class="bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-pink-500 to-red-500">Alex_Yehui</span>
+      </h1>
+      <p class="text-xl md:text-2xl text-white/80 mb-6">欢迎来到我的主页 🚀</p>
+      <div class="flex gap-4 flex-wrap justify-center">
+        <a href="mailto:yhma@sudytech.cn?subject=联系Alex_Yehui&body=你好Alex，%0D%0A%0D%0A我想和你联系...%0D%0A%0D%0A此邮件来自你的个人主页。"
+          class="btn btn-primary btn-lg shadow-xl transition-transform hover:scale-110 animate-bounce">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          联系我
+        </a>
+        <a href="models.html" class="btn btn-secondary btn-lg shadow-xl transition-transform hover:scale-110">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          查看模型
+        </a>
       </div>
-    </div>
-  </div>
+    </section>
+    <!-- 我的项目区块 -->
+    <section class="mt-12 animate-fade-in-up">
+      <h2 class="text-3xl font-bold text-white mb-6 text-center">我的 GitHub 项目</h2>
+      <div id="github-projects" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </section>
+    <section class="mt-12 text-center animate-fade-in-up">
+      <div class="flex justify-center gap-4">
+        <a href="#" class="btn btn-circle btn-outline hover:bg-indigo-500 hover:text-white transition-colors"><svg
+            xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 8h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2h2M12 15v-6m0 0l-3 3m3-3l3 3" />
+          </svg></a>
+        <a href="#" class="btn btn-circle btn-outline hover:bg-pink-500 hover:text-white transition-colors"><svg
+            xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zM12 14v7m0 0H9m3 0h3" />
+          </svg></a>
+        <a href="#" class="btn btn-circle btn-outline hover:bg-yellow-400 hover:text-white transition-colors"><svg
+            xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg></a>
+      </div>
+      <p class="mt-6 text-white/70">© 2024 Alex_Yehui. All rights reserved.</p>
+    </section>
+  </main>
+  <script>
+    // 简单的淡入动画
+    document.querySelectorAll('.animate-fade-in-up').forEach(el => {
+      el.style.opacity = 0;
+      el.style.transform = 'translateY(40px)';
+      setTimeout(() => {
+        el.style.transition = 'all 1s cubic-bezier(.4,2,.3,1)';
+        el.style.opacity = 1;
+        el.style.transform = 'translateY(0)';
+      }, 200);
+    });
 
-  <footer class="footer md:footer-horizontal">
-    <div class="footer-center">
-      <p>Copyright © 2025 - All right reserved</p>
-    </div>
-  </footer>
-
-
+    // 拉取并渲染GitHub项目
+    const githubUser = 'AKAama'; // 如需更换用户名请修改这里
+    fetch(`https://api.github.com/users/${githubUser}/repos?per_page=100&sort=updated`)
+      .then(res => res.json())
+      .then(repos => {
+        const container = document.getElementById('github-projects');
+        if (!Array.isArray(repos)) {
+          container.innerHTML = '<p class="text-white">无法获取项目列表</p>';
+          return;
+        }
+        container.innerHTML = repos.map(repo => `
+          <a href="${repo.html_url}" target="_blank" rel="noopener" class="block card bg-white/90 shadow hover:scale-105 transition-transform mb-2">
+            <div class="card-body p-4">
+              <h3 class="card-title text-lg font-bold text-indigo-700">${repo.name}</h3>
+              <p class="text-gray-600 text-sm line-clamp-2">${repo.description ? repo.description : ''}</p>
+            </div>
+          </a>
+        `).join('');
+      });
+  </script>
 </body>
 
 </html>

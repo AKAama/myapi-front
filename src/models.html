@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>模型列表 - Alex_Yehui</title>
+    <link rel="icon" href="favicon.ico" />
+    <link href="./output.css" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600">
+    <!-- 导航栏 -->
+    <nav class="navbar bg-white/10 backdrop-blur-md shadow-lg">
+        <div class="navbar-start">
+            <a href="index.html" class="btn btn-ghost text-white hover:bg-white/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                返回主页
+            </a>
+        </div>
+        <div class="navbar-center">
+            <h1 class="text-2xl font-bold text-white">🤖 AI 模型列表</h1>
+        </div>
+        <div class="navbar-end">
+            <button class="btn btn-success mr-2" onclick="showCreateModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                新建模型
+            </button>
+            <button class="btn btn-primary" onclick="refreshModels()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                刷新
+            </button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- 加载状态 -->
+        <div id="loading" class="text-center py-12">
+            <div class="loading loading-spinner loading-lg text-white"></div>
+            <p class="text-white mt-4">正在加载模型列表...</p>
+        </div>
+
+        <!-- 错误状态 -->
+        <div id="error" class="hidden text-center py-12">
+            <div class="alert alert-error max-w-md mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="error-message">加载失败，请检查网络连接</span>
+            </div>
+        </div>
+
+        <!-- 模型列表 -->
+        <div id="models-container" class="hidden">
+            <div class="stats shadow mb-8 bg-white/10 backdrop-blur-md">
+                <div class="stat">
+                    <div class="stat-title text-white/80">总模型数</div>
+                    <div class="stat-value text-white" id="total-models">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title text-white/80">聊天模型</div>
+                    <div class="stat-value text-blue-400" id="online-models">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title text-white/80">重排序模型</div>
+                    <div class="stat-value text-purple-400" id="offline-models">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="models-grid">
+                <!-- 模型卡片将在这里动态生成 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 创建/编辑模型模态框 -->
+    <dialog id="model-modal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <h3 class="font-bold text-lg mb-4" id="modal-title">新建模型</h3>
+            <form id="model-form" class="space-y-4">
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">名称 *</span>
+                    </label>
+                    <input type="text" id="model-name" name="name" class="input input-bordered" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">类型 *</span>
+                    </label>
+                    <select id="model-type" name="type" class="select select-bordered" required>
+                        <option value="">请选择类型</option>
+                        <option value="chat">聊天模型</option>
+                        <option value="Rerank">重排序模型</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">端点 *</span>
+                    </label>
+                    <input type="url" id="model-endpoint" name="endpoint" class="input input-bordered" required>
+                </div>
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">密钥 *</span>
+                    </label>
+                    <input type="password" id="model-api-key" name="api_key" class="input input-bordered" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">超时时间 *</span>
+                    </label>
+                    <input type="number" id="model-timeout" name="timeout" class="input input-bordered" value="30"
+                        min="1" max="300" placeholder="单位：秒">
+                </div>
+                <div class="form-control">
+                    <label class="label w-[100px]">
+                        <span class="label-text">维度</span>
+                    </label>
+                    <input type="number" id="model-dimensions" name="dimensions" class="input input-bordered"
+                        value="1536" min="1">
+                </div>
+            </form>
+            <div class="modal-action">
+                <button class="btn" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveModel()">保存</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- 聊天模态框 -->
+    <dialog id="chat-modal" class="modal">
+        <div class="modal-box w-11/12 max-w-4xl h-3/4">
+            <h3 class="font-bold text-lg mb-4">与 <span id="chat-model-name"></span> 对话</h3>
+            <div class="flex flex-col h-full">
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4 space-y-4">
+                    <!-- 聊天消息将在这里显示 -->
+                </div>
+                <div class="flex gap-2">
+                    <textarea id="chat-input" class="textarea textarea-bordered flex-1" placeholder="输入你的消息..."
+                        rows="3"></textarea>
+                    <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+            <div class="modal-action">
+                <button class="btn" onclick="closeChatModal()">关闭</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        // API 配置
+        const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+        // 页面元素
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const errorMessageEl = document.getElementById('error-message');
+        const modelsContainerEl = document.getElementById('models-container');
+        const modelsGridEl = document.getElementById('models-grid');
+        const totalModelsEl = document.getElementById('total-models');
+        const onlineModelsEl = document.getElementById('online-models');
+        const offlineModelsEl = document.getElementById('offline-models');
+
+        // 获取模型列表
+        async function fetchModels() {
+            try {
+                showLoading();
+
+                const response = await fetch(`${API_BASE_URL}/models/get`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.status === 200) {
+                    displayModels(data.data.list || []);
+                } else {
+                    throw new Error(data.msg || '获取模型列表失败');
+                }
+            } catch (error) {
+                console.error('获取模型列表失败:', error);
+                showError(error.message);
+            }
+        }
+
+        // 显示模型列表
+        function displayModels(models) {
+            hideLoading();
+            hideError();
+
+            // 更新统计信息
+            const total = models.length;
+            const chatModels = models.filter(model => model.type === 'chat').length;
+            const rerankModels = models.filter(model => model.type === 'Rerank').length;
+
+            totalModelsEl.textContent = total;
+            onlineModelsEl.textContent = chatModels;
+            offlineModelsEl.textContent = rerankModels;
+
+            // 生成模型卡片
+            modelsGridEl.innerHTML = models.map(model => `
+          <div class="card bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div class="card-body">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-lg font-bold text-gray-800">${model.name || '未知模型'}</h2>
+                <div class="badge ${getTypeBadgeClass(model.type)}">
+                  ${model.type || '未知'}
+                </div>
+              </div>
+              
+              <div class="space-y-2 text-sm text-gray-600">
+                <div><strong>模型ID:</strong> <code class="text-xs">${model.model_id}</code></div>
+                <div><strong>端点:</strong> <code class="text-xs">${model.endpoint}</code></div>
+                <div><strong>超时:</strong> ${model.timeout}s</div>
+                <div><strong>维度:</strong> ${model.dimensions}</div>
+                <div><strong>创建时间:</strong> ${formatDate(model.created_at)}</div>
+                <div><strong>更新时间:</strong> ${formatDate(model.updated_at)}</div>
+              </div>
+              
+              <div class="card-actions justify-end mt-4">
+                <button class="btn btn-primary btn-sm" onclick="chatWithModel('${model.model_id}', '${model.name}')">
+                  💬 聊天
+                </button>
+                <button class="btn btn-info btn-sm" onclick="editModel('${model.model_id}')">
+                  ✏️ 编辑
+                </button>
+                <button class="btn btn-error btn-sm" onclick="deleteModel('${model.model_id}', '${model.name}')">
+                  🗑️ 删除
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+            modelsContainerEl.classList.remove('hidden');
+        }
+
+        // 获取类型徽章样式
+        function getTypeBadgeClass(type) {
+            if (type === 'chat') {
+                return 'badge-primary';
+            } else if (type === 'Rerank') {
+                return 'badge-secondary';
+            } else {
+                return 'badge-warning';
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString || dateString === '0001-01-01T00:00:00Z') {
+                return '未设置';
+            }
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return '格式错误';
+            }
+        }
+
+        // 模态框相关变量
+        let currentModelId = null;
+        let isEditMode = false;
+
+        // 显示创建模型模态框
+        function showCreateModal() {
+            isEditMode = false;
+            currentModelId = null;
+            document.getElementById('modal-title').textContent = '新建模型';
+            document.getElementById('model-form').reset();
+            document.getElementById('model-modal').showModal();
+        }
+
+        // 显示编辑模型模态框
+        async function editModel(modelId) {
+            try {
+                isEditMode = true;
+                currentModelId = modelId;
+                document.getElementById('modal-title').textContent = '编辑模型';
+
+                // 获取模型详情
+                const response = await fetch(`${API_BASE_URL}/models/${modelId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.status === 200) {
+                    const model = data.data;
+                    // 填充表单
+                    document.getElementById('model-name').value = model.name || '';
+                    document.getElementById('model-type').value = model.type || '';
+                    document.getElementById('model-endpoint').value = model.endpoint || '';
+                    document.getElementById('model-api-key').value = model.api_key || '';
+                    document.getElementById('model-timeout').value = model.timeout || 30;
+                    document.getElementById('model-dimensions').value = model.dimensions || 1536;
+                }
+
+                document.getElementById('model-modal').showModal();
+            } catch (error) {
+                console.error('获取模型详情失败:', error);
+                alert('获取模型详情失败: ' + error.message);
+            }
+        }
+
+        // 保存模型（创建或更新）
+        async function saveModel() {
+            try {
+                const form = document.getElementById('model-form');
+                const formData = new FormData(form);
+                const modelData = Object.fromEntries(formData.entries());
+
+                // 转换数字字段
+                modelData.timeout = parseInt(modelData.timeout) || 30;
+                modelData.dimensions = parseInt(modelData.dimensions) || 1536;
+
+                const url = isEditMode
+                    ? `${API_BASE_URL}/models/${currentModelId}`
+                    : `${API_BASE_URL}/models/create`;
+
+                const method = isEditMode ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(modelData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.status === 200) {
+                    alert(isEditMode ? '模型更新成功！' : '模型创建成功！');
+                    closeModal();
+                    refreshModels();
+                } else {
+                    throw new Error(data.msg || '操作失败');
+                }
+            } catch (error) {
+                console.error('保存模型失败:', error);
+                alert('保存模型失败: ' + error.message);
+            }
+        }
+
+        // 删除模型
+        async function deleteModel(modelId, modelName) {
+            if (!confirm(`确定要删除模型 "${modelName}" 吗？此操作不可撤销。`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/models/${modelId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.status === 200) {
+                    alert('模型删除成功！');
+                    refreshModels();
+                } else {
+                    throw new Error(data.msg || '删除失败');
+                }
+            } catch (error) {
+                console.error('删除模型失败:', error);
+                alert('删除模型失败: ' + error.message);
+            }
+        }
+
+        // 与模型聊天
+        function chatWithModel(modelId, modelName) {
+            currentModelId = modelId;
+            document.getElementById('chat-model-name').textContent = modelName;
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('chat-input').value = '';
+            document.getElementById('chat-modal').showModal();
+        }
+
+        // 发送聊天消息
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const messagesContainer = document.getElementById('chat-messages');
+
+            // 添加用户消息
+            messagesContainer.innerHTML += `
+                <div class="chat chat-end">
+                    <div class="chat-bubble chat-bubble-primary">${message}</div>
+                </div>
+            `;
+
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // 显示加载状态
+            messagesContainer.innerHTML += `
+                <div class="chat chat-start">
+                    <div class="chat-bubble">
+                        <div class="loading loading-dots loading-sm"></div>
+                        正在思考...
+                    </div>
+                </div>
+            `;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/models/chat/${currentModelId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 移除加载状态
+                const loadingBubble = messagesContainer.lastElementChild;
+                if (loadingBubble) {
+                    loadingBubble.remove();
+                }
+
+                if (data.status === 200) {
+                    // 添加AI回复
+                    messagesContainer.innerHTML += `
+                        <div class="chat chat-start">
+                            <div class="chat-bubble">${data.data || data.msg || '抱歉，我没有理解您的问题。'}</div>
+                        </div>
+                    `;
+                } else {
+                    messagesContainer.innerHTML += `
+                        <div class="chat chat-start">
+                            <div class="chat-bubble chat-bubble-error">${data.msg || '抱歉，发生了错误。'}</div>
+                        </div>
+                    `;
+                }
+
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } catch (error) {
+                console.error('发送消息失败:', error);
+
+                // 移除加载状态
+                const loadingBubble = messagesContainer.lastElementChild;
+                if (loadingBubble) {
+                    loadingBubble.remove();
+                }
+
+                messagesContainer.innerHTML += `
+                    <div class="chat chat-start">
+                        <div class="chat-bubble chat-bubble-error">发送消息失败: ${error.message}</div>
+                    </div>
+                `;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        // 关闭模型模态框
+        function closeModal() {
+            document.getElementById('model-modal').close();
+        }
+
+        // 关闭聊天模态框
+        function closeChatModal() {
+            document.getElementById('chat-modal').close();
+        }
+
+        // 刷新模型列表
+        function refreshModels() {
+            fetchModels();
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            modelsContainerEl.classList.add('hidden');
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            loadingEl.classList.add('hidden');
+        }
+
+        // 显示错误状态
+        function showError(message) {
+            hideLoading();
+            errorMessageEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            modelsContainerEl.classList.add('hidden');
+        }
+
+        // 隐藏错误状态
+        function hideError() {
+            errorEl.classList.add('hidden');
+        }
+
+        // 页面加载时获取模型列表
+        document.addEventListener('DOMContentLoaded', fetchModels);
+
+        // 聊天输入框回车发送
+        document.getElementById('chat-input').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>
