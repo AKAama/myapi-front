@@ -1,5 +1,5 @@
 // API 配置
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'http://1.94.184.24:3000/api/v1';
 
 // 页面元素
 const loadingEl = document.getElementById('loading');

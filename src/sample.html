@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>样例问题 - Alex_yehui</title>
+    <link rel="icon" href="favicon.ico" />
+    <link href="./output.css" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600">
+    <!-- 导航栏 -->
+    <nav class="navbar bg-white/10 backdrop-blur-md shadow-lg">
+        <div class="navbar-start">
+            <a href="index.html" class="btn btn-ghost text-white hover:bg-white/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                返回主页
+            </a>
+        </div>
+        <div class="navbar-center">
+            <h1 class="text-2xl font-bold text-white">📝 样例问题</h1>
+        </div>
+        <div class="navbar-end">
+            <a href="models.html" class="btn btn-primary mr-2">模型管理</a>
+        </div>
+    </nav>
+    <main class="container mx-auto px-6 py-8">
+        <!-- 加载状态 -->
+        <div id="loading" class="text-center py-12">
+            <div class="loading loading-spinner loading-lg text-white"></div>
+            <p class="text-white mt-4">正在加载样例问题...</p>
+        </div>
+        <!-- 错误状态 -->
+        <div id="error" class="hidden text-center py-12">
+            <div class="alert alert-error max-w-md mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="error-message">加载失败，请检查网络连接</span>
+            </div>
+        </div>
+        <!-- 样例问题列表 -->
+        <div id="samples-container" class="hidden">
+            <div class="mb-8 flex items-center justify-between">
+                <span class="text-white/90 text-lg font-bold">常见提问示例</span>
+                <div class="flex gap-2 items-center">
+                    <input id="search-example" type="text" class="input input-bordered input-sm w-48"
+                        placeholder="输入问题关键词...">
+                    <button class="btn btn-sm btn-primary" onclick="searchSamples()">查询</button>
+                    <button class="btn btn-success btn-sm" onclick="openCreateModal()">➕ 新增样例问题</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table w-full bg-white/90 rounded-xl shadow">
+                    <thead>
+                        <tr>
+                            <th class="text-left">问题</th>
+                            <th class="text-left">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="samples-list">
+                        <!-- 列表项将由 JS 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- 分页栏 -->
+            <div id="pagination" class="flex justify-center items-center gap-2 mt-6">
+                <button id="prev-page" class="btn btn-sm" onclick="changePage(-1)">上一页</button>
+                <span id="page-info" class="text-white/80"></span>
+                <button id="next-page" class="btn btn-sm" onclick="changePage(1)">下一页</button>
+            </div>
+        </div>
+        <!-- 编辑样例模态框 -->
+        <dialog id="edit-modal" class="modal">
+            <div class="modal-box w-11/12 max-w-2xl p-8 rounded-2xl shadow-xl bg-white">
+                <h3 class="font-bold text-xl mb-6 text-indigo-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 17a4 4 0 004-4V7a4 4 0 10-8 0v6a4 4 0 004 4z" />
+                    </svg>
+                    编辑样例问题
+                </h3>
+                <form id="edit-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">原始问题 *</span></label>
+                            <input type="text" id="edit-example" name="example" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">意图 *</span></label>
+                            <select id="edit-intent" name="intent" class="select select-bordered" required>
+                                <option value="content">内容 (content)</option>
+                                <option value="greet">打招呼 (greet)</option>
+                                <option value="else">其他 (else)</option>
+                            </select>
+                            <span class="text-xs text-gray-500">内容相关/打招呼/无关</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">数量</span></label>
+                            <input type="number" id="edit-quantity" name="quantity" class="input input-bordered"
+                                placeholder="如 1000">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">操作符</span></label>
+                            <select id="edit-op" name="op" class="select select-bordered">
+                                <option value="">无</option>
+                                <option value=">">&gt;</option>
+                                <option value="<">&lt;</option>
+                                <option value="=">=</option>
+                                <option value=">=">&gt;=</option>
+                                <option value="<=">&lt;=</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label block"><span class="label-text">排序</span></label>
+                        <select id="edit-sort" name="sort" class="select select-bordered">
+                            <option value="">无</option>
+                            <option value="new">最新 (new)</option>
+                            <option value="hot">热门 (hot)</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">发布查询</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="edit-publish-key" class="input input-bordered flex-1"
+                                placeholder="如：供稿单位">
+                            <span class="text-gray-500 self-center">:</span>
+                            <input type="text" id="edit-publish-value" class="input input-bordered flex-1"
+                                placeholder="如：建筑学院">
+                        </div>
+                        <span class="text-xs text-gray-500">可填写发布栏目、供稿单位、投稿人等</span>
+                    </div>
+                </form>
+                <div class="modal-action flex justify-end gap-2 mt-6">
+                    <button class="btn" onclick="closeEditModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveEditSample()">保存</button>
+                </div>
+            </div>
+        </dialog>
+        <!-- 新增样例模态框 -->
+        <dialog id="create-modal" class="modal">
+            <div class="modal-box w-11/12 max-w-lg p-8 rounded-2xl shadow-xl bg-white">
+                <h3 class="font-bold text-xl mb-6 text-green-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    新增样例问题
+                </h3>
+                <form id="create-form" class="space-y-4">
+                    <div class="form-control">
+                        <label class="label block"><span class="label-text">原始问题 *</span></label>
+                        <input type="text" id="create-example" name="example" class="input input-bordered" required>
+                    </div>
+                    <div class="form-control">
+                        <label class="label block"><span class="label-text">意图 *</span></label>
+                        <select id="create-intent" name="intent" class="select select-bordered" required>
+                            <option value="content">内容 (content)</option>
+                            <option value="greet">打招呼 (greet)</option>
+                            <option value="else">其他 (else)</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">发布查询</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="create-publish-key" class="input input-bordered flex-1"
+                                placeholder="如：供稿单位">
+                            <span class="text-gray-500 self-center">:</span>
+                            <input type="text" id="create-publish-value" class="input input-bordered flex-1"
+                                placeholder="如：新闻网">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">排序</span></label>
+                            <select id="create-sort" name="sort" class="select select-bordered">
+                                <option value="">无</option>
+                                <option value="new">最新 (new)</option>
+                                <option value="hot">热门 (hot)</option>
+                                <option value="else">其他 (else)</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">数量</span></label>
+                            <input type="number" id="create-quantity" name="quantity" class="input input-bordered"
+                                placeholder="如 1000">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">操作符</span></label>
+                            <select id="create-op" name="op" class="select select-bordered">
+                                <option value="">无</option>
+                                <option value=">">&gt;</option>
+                                <option value="<">&lt;</option>
+                                <option value="=">=</option>
+                                <option value=">=">&gt;=</option>
+                                <option value="<=">&lt;=</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <div class="modal-action flex justify-end gap-2 mt-6">
+                    <button class="btn" onclick="closeCreateModal()">取消</button>
+                    <button class="btn btn-success" onclick="saveCreateSample()">保存</button>
+                </div>
+            </div>
+        </dialog>
+    </main>
+    <script src="./js/sample.js"></script>
+</body>
+
+</html>
