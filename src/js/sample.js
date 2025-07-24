@@ -1,5 +1,5 @@
 // API 配置
-const SAMPLE_API_BASE_URL = 'http://localhost:3000/v1';
+const SAMPLE_API_BASE_URL = 'http://localhost:3000/v1/sample';
 
 // 页面元素
 const loadingEl = document.getElementById('loading');
@@ -28,7 +28,7 @@ async function fetchSamples(page = 1, example = '') {
         if (example && example.trim()) {
             body.example = example.trim();
         }
-        const response = await fetch(`${SAMPLE_API_BASE_URL}/sample/list`, {
+        const response = await fetch(`${SAMPLE_API_BASE_URL}/list`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -106,9 +106,11 @@ async function editSample(id) {
     currentEditId = id;
     // 先清空表单
     document.getElementById('edit-form').reset();
+    // 清空发布项
+    document.getElementById('edit-publish-list').innerHTML = '';
     // 拉取完整数据
     try {
-        const response = await fetch(`${SAMPLE_API_BASE_URL}/sample/show/${id}`, {
+        const response = await fetch(`${SAMPLE_API_BASE_URL}/show/${id}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -125,15 +127,23 @@ async function editSample(id) {
             document.getElementById('edit-quantity').value = sample.quantity || '';
             document.getElementById('edit-op').value = sample.op || '';
             document.getElementById('edit-sort').value = sample.sort || '';
-            // 解析 publish 字段为 key:value 形式
-            const publish = sample.publish || '';
-            if (publish.indexOf(':') > 0) {
-                document.getElementById('edit-publish-key').value = publish.substring(0, publish.indexOf(':')).trim();
-                document.getElementById('edit-publish-value').value = publish.substring(publish.indexOf(':') + 1).trim();
+            // 回填publish数组
+            if (Array.isArray(sample.publish) && sample.publish.length) {
+                sample.publish.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'flex gap-2 mb-2 publish-row';
+                    row.innerHTML = `
+                        <input type="text" class="input input-bordered flex-1 publish-type" placeholder="类型，如：siteName" value="${item.type || ''}">
+                        <span class="text-gray-500 self-center">:</span>
+                        <input type="text" class="input input-bordered flex-1 publish-value" placeholder="值，如：新闻网" value="${item.value || ''}">
+                        <button type="button" class="btn btn-error btn-xs" onclick="removePublishRow(this)">-</button>
+                    `;
+                    document.getElementById('edit-publish-list').appendChild(row);
+                });
             } else {
-                document.getElementById('edit-publish-key').value = '';
-                document.getElementById('edit-publish-value').value = '';
+                addPublishRow('edit');
             }
+            document.getElementById('edit-question').value = sample.question || '';
             handleIntentFields(sample.intent || 'content');
         } else {
             // 清空
@@ -141,8 +151,9 @@ async function editSample(id) {
             document.getElementById('edit-quantity').value = '';
             document.getElementById('edit-op').value = '';
             document.getElementById('edit-sort').value = '';
-            document.getElementById('edit-publish-key').value = '';
-            document.getElementById('edit-publish-value').value = '';
+            document.getElementById('edit-publish-list').innerHTML = '';
+            addPublishRow('edit');
+            document.getElementById('edit-question').value = '';
             handleIntentFields('content');
         }
     } catch (error) {
@@ -155,11 +166,13 @@ async function editSample(id) {
 document.getElementById('edit-intent').addEventListener('change', function (e) {
     handleIntentFields(e.target.value);
 });
-function handleIntentFields(intent) {
+// 修改 handleIntentFields 支持新增和编辑
+function handleIntentFields(intent, isCreate) {
     const disable = (intent === 'greet' || intent === 'else');
-    [
-        'edit-quantity', 'edit-op', 'edit-sort', 'edit-publish-key', 'edit-publish-value'
-    ].forEach(id => {
+    const ids = isCreate
+        ? ['create-quantity', 'create-op', 'create-sort', 'create-publish-key', 'create-publish-value']
+        : ['edit-quantity', 'edit-op', 'edit-sort', 'edit-publish-key', 'edit-publish-value'];
+    ids.forEach(id => {
         const el = document.getElementById(id);
         el.disabled = disable;
         if (disable) el.value = '';
@@ -175,21 +188,48 @@ function closeEditModal() {
 function openCreateModal() {
     // 清空表单
     document.getElementById('create-form').reset();
+    document.getElementById('create-publish-list').innerHTML = ''; // 清空发布项
     document.getElementById('create-publish-key').value = '';
     document.getElementById('create-publish-value').value = '';
+    handleIntentFields(document.getElementById('create-intent').value, true); // 初始化禁用状态
     document.getElementById('create-modal').showModal();
 }
+document.getElementById('create-intent').addEventListener('change', function (e) {
+    handleIntentFields(e.target.value, true);
+});
 function closeCreateModal() {
     document.getElementById('create-modal').close();
 }
+// 动态添加/删除发布项
+function addPublishRow(mode) {
+    const listId = mode === 'edit' ? 'edit-publish-list' : 'create-publish-list';
+    const list = document.getElementById(listId);
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 mb-2 publish-row';
+    row.innerHTML = `
+        <input type="text" class="input input-bordered flex-1 publish-type" placeholder="类型，如：siteName">
+        <span class="text-gray-500 self-center">:</span>
+        <input type="text" class="input input-bordered flex-1 publish-value" placeholder="值，如：新闻网">
+        <button type="button" class="btn btn-error btn-xs" onclick="removePublishRow(this)">-</button>
+    `;
+    list.appendChild(row);
+}
+function removePublishRow(btn) {
+    btn.parentElement.remove();
+}
+// 保存/编辑时组装publish为数组
 async function saveCreateSample() {
     const form = document.getElementById('create-form');
     const formData = new FormData(form);
     const sampleData = Object.fromEntries(formData.entries());
-    // 组合 publish 字段为 key:value 格式
-    const publishKey = document.getElementById('create-publish-key').value.trim();
-    const publishValue = document.getElementById('create-publish-value').value.trim();
-    sampleData.publish = (publishKey && publishValue) ? `${publishKey}：${publishValue}` : '';
+    // 组装 publish 数组
+    const publishArr = [];
+    document.querySelectorAll('#create-publish-list .publish-row').forEach(row => {
+        const type = row.querySelector('.publish-type').value.trim();
+        const value = row.querySelector('.publish-value').value.trim();
+        if (type && value) publishArr.push({ type, value });
+    });
+    sampleData.publish = publishArr;
     sampleData.quantity = sampleData.quantity ? parseInt(sampleData.quantity) : 0;
     // 只保留接口需要的字段
     const payload = {
@@ -215,7 +255,7 @@ async function saveCreateSample() {
         if (data.status === 200) {
             alert('新增成功！');
             closeCreateModal();
-            fetchSamples();
+            fetchSamples(1, currentSearch);
         } else {
             throw new Error(data.msg || '新增失败');
         }
@@ -223,8 +263,7 @@ async function saveCreateSample() {
         alert('新增失败: ' + error.message);
     }
 }
-
-// 保存编辑
+// 编辑保存时组装publish为数组
 async function saveEditSample() {
     const form = document.getElementById('edit-form');
     const formData = new FormData(form);
@@ -244,12 +283,18 @@ async function saveEditSample() {
         sampleData.quantity = '';
         sampleData.op = '';
         sampleData.sort = '';
-        sampleData.publish = '';
+        sampleData.publish = [];
+        sampleData.question = '';
+    } else {
+        // 组装 publish 数组
+        const publishArr = [];
+        document.querySelectorAll('#edit-publish-list .publish-row').forEach(row => {
+            const type = row.querySelector('.publish-type').value.trim();
+            const value = row.querySelector('.publish-value').value.trim();
+            if (type && value) publishArr.push({ type, value });
+        });
+        sampleData.publish = publishArr;
     }
-    // 组合 publish 字段为 key:value 格式
-    const publishKey = document.getElementById('edit-publish-key').value.trim();
-    const publishValue = document.getElementById('edit-publish-value').value.trim();
-    sampleData.publish = (publishKey && publishValue) ? `${publishKey}:${publishValue}` : '';
     sampleData.quantity = sampleData.quantity ? parseInt(sampleData.quantity) : 0;
     // 发起更新请求
     try {
@@ -267,7 +312,7 @@ async function saveEditSample() {
         if (data.status === 200) {
             alert('修改成功！');
             closeEditModal();
-            fetchSamples();
+            fetchSamples(1, currentSearch);
         } else {
             throw new Error(data.msg || '修改失败');
         }

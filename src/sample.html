@@ -133,13 +133,19 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text">发布查询</span></label>
-                        <div class="flex gap-2">
-                            <input type="text" id="edit-publish-key" class="input input-bordered flex-1"
-                                placeholder="如：供稿单位">
-                            <span class="text-gray-500 self-center">:</span>
-                            <input type="text" id="edit-publish-value" class="input input-bordered flex-1"
-                                placeholder="如：建筑学院">
+                        <div id="edit-publish-list">
+                            <div class="flex gap-2 mb-2 publish-row">
+                                <input type="text" class="input input-bordered flex-1 publish-type"
+                                    placeholder="类型，如：siteName">
+                                <span class="text-gray-500 self-center">:</span>
+                                <input type="text" class="input input-bordered flex-1 publish-value"
+                                    placeholder="值，如：新闻网">
+                                <button type="button" class="btn btn-error btn-xs"
+                                    onclick="removePublishRow(this)">-</button>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-success btn-xs mt-2" onclick="addPublishRow('edit')">+
+                            添加发布项</button>
                         <span class="text-xs text-gray-500">可填写发布栏目、供稿单位、投稿人等</span>
                     </div>
                 </form>
@@ -174,13 +180,19 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text">发布查询</span></label>
-                        <div class="flex gap-2">
-                            <input type="text" id="create-publish-key" class="input input-bordered flex-1"
-                                placeholder="如：供稿单位">
-                            <span class="text-gray-500 self-center">:</span>
-                            <input type="text" id="create-publish-value" class="input input-bordered flex-1"
-                                placeholder="如：新闻网">
+                        <div id="create-publish-list">
+                            <div class="flex gap-2 mb-2 publish-row">
+                                <input type="text" class="input input-bordered flex-1 publish-type"
+                                    placeholder="类型，如：siteName" id="create-publish-key">
+                                <span class="text-gray-500 self-center">:</span>
+                                <input type="text" class="input input-bordered flex-1 publish-value"
+                                    placeholder="值，如：新闻网" id="create-publish-value">
+                                <button type="button" class="btn btn-error btn-xs"
+                                    onclick="removePublishRow(this)">-</button>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-success btn-xs mt-2" onclick="addPublishRow('create')">+
+                            添加发布项</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="form-control">
